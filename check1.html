@@ -394,40 +394,58 @@
       }
     }
     //get location
-    window.addEventListener('load', function() {
-  getLocation();
-});
-function getLocation() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(showPosition, showError);
-  } else {
-    alert("Geolocation is not supported by this browser.");
-  }
-}
+     window.addEventListener('load', function() {
+      getLocation();
+    });
 
-function showPosition(position) {
-  document.getElementById("latitude").value = position.coords.latitude;
-  document.getElementById("longitude").value = position.coords.longitude;
-}
+    function getLocation() {
+      if (navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' }).then(function(permissionStatus) {
+          if (permissionStatus.state === 'granted') {
+            getCurrentLocation();
+          } else if (permissionStatus.state === 'prompt') {
+            requestLocationPermission();
+          } else {
+            showLocationError();
+          }
+        }).catch(function(error) {
+          console.error('Error getting permission status:', error);
+        });
+      } else if (navigator.geolocation) {
+        getCurrentLocation();
+      } else {
+        showLocationError();
+      }
+    }
 
-function showError(error) {
-  switch (error.code) {
-    case error.PERMISSION_DENIED:
-      alert("User denied the request for Geolocation.");
-      break;
-    case error.POSITION_UNAVAILABLE:
-      alert("Location information is unavailable.");
-      break;
-    case error.TIMEOUT:
-      alert("The request to get user location timed out.");
-      break;
-    case error.UNKNOWN_ERROR:
-      alert("An unknown error occurred.");
-      break;
-  }
-}
+    function requestLocationPermission() {
+      if (navigator.permissions) {
+        navigator.permissions.request({ name: 'geolocation' }).then(function(permissionStatus) {
+          if (permissionStatus.state === 'granted') {
+            getCurrentLocation();
+          } else {
+            showLocationError();
+          }
+        }).catch(function(error) {
+          console.error('Error requesting permission:', error);
+        });
+      } else {
+        showLocationError();
+      }
+    }
 
+    function getCurrentLocation() {
+      navigator.geolocation.getCurrentPosition(showPosition, showLocationError, { enableHighAccuracy: true });
+    }
 
+    function showPosition(position) {
+      document.getElementById("latitude").value = position.coords.latitude;
+      document.getElementById("longitude").value = position.coords.longitude;
+    }
+
+    function showLocationError() {
+      alert("Please enable location services to access your current location.");
+    }
 
   
     //image preview
@@ -455,7 +473,9 @@ function showError(error) {
 
       <!-- form -->
       <form
-     
+        action="/api/v1/registration"
+        method="post"
+        enctype="multipart/form-data"
       >
         <div class="form-group">
           <label for="image" class="image-picker">
@@ -584,17 +604,17 @@ function showError(error) {
           <label for="">Phone Number</label>
           <input type="number" name="phoneNumber" required />
         </div>
+       
+     
         <div class="box">
-          <button onclick="getLocation()">Get Location</button>
-        </div>
-        <div class="box">
-          <label for="">Latitude</label>
-          <input type="text" id="latitude" name="latitude" readonly />
-        </div>
-        <div class="box">
-          <label for="">Longitude</label>
-          <input type="text" id="longitude" name="longitude" readonly />
-        </div>
+    <label for="">Latitude</label>
+    <input type="text" id="latitude" name="latitude" readonly />
+  </div>
+  <div class="box">
+    <label for="">Longitude</label>
+    <input type="text" id="longitude" name="longitude" readonly />
+  </div>
+
 
         <div class="box-check">
           <input type="checkbox" name="agreeTerms" />
